@@ -1,0 +1,24 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "build",
+        "command": "g++",
+        "args": [
+          "-o", "my_project",
+          "main.cpp", "glad.c",
+          "-I", "includes","-I/opt/homebrew/include", 
+          "-L", "/opt/homebrew/lib",
+          "-lglfw", "-ldl", "-lGL"
+        ],
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        },
+        "problemMatcher": ["$gcc"],
+        "detail": "Generated build task for C++"
+      }
+      
+
+    ]
+  }
