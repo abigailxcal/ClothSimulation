@@ -1,6 +1,6 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-
+#include <vector>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -123,7 +123,13 @@ int main(int argc, const char * argv[])
         
         if (running) {
             for (int i = 0; i < cloth.iterationFreq; i ++) {
-                cloth.computeForce(TIME_STEP, gravity);
+                // in computeForce(), we also need to compute values for preconditioned CG
+                    // C[i] = dist-springs[i].rest_length;
+		            // dc_dp[i] = deltaP/dist;
+		            // C_Dot[i] = glm::dot(v1, -dc_dp[i]) + glm::dot(v2, dc_dp[i]);
+		            // deltaP2[i] = glm::vec3(deltaP.x*deltaP.x,deltaP.y*deltaP.y, deltaP.z*deltaP.z);
+                cloth.computeForce(TIME_STEP, gravity); 
+                // need: cloth.calculateDerivatives (the jacobian)
                 cloth.integrate(AIR_FRICTION, TIME_STEP);
                 cloth.collisionResponse(&ground, &ball);
             }

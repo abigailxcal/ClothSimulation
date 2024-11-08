@@ -1,7 +1,10 @@
 #pragma once
 
 #include <vector>
-
+#include <vector>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include "Spring.h"
 #include "Rigid.h"
 
@@ -177,6 +180,25 @@ public:
 			springs[i]->applyInternalForce(timeStep);
 		}
 	}
+
+    void computeForceDerivatives(double timeStep)
+    {
+	// should the derivatives need to be cleared?
+	// memset(&(df_dx[0]),0,total_points*sizeof(glm::mat3));
+	// memset(&(df_dv[0]),0,total_points*sizeof(glm::mat3));
+     for (int i = 0; i < springs.size(); i++)
+		{
+            springs[i]->springForceDerivative(); //accesses df_dx,df_dv in Spring.h
+			
+		}   
+    }
+    void implicit_integration(double timeStep){
+        for (int i = 0; i < nodes.size(); i++){
+            nodes[i]->implicit_integration(timeStep);
+        }
+
+    }
+
 
 	void integrate(double airFriction, double timeStep)
 	{
