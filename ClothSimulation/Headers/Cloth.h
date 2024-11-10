@@ -11,7 +11,7 @@
 class Cloth
 {
 public:
-    const int nodesDensity = 4;
+    const int nodesDensity = 3; //4
     const int iterationFreq = 25;
     const double structuralCoef = 1000.0;
     const double shearCoef = 50.0;
@@ -173,6 +173,9 @@ public:
 		for (int i = 0; i < nodes.size(); i++)
 		{
 			nodes[i]->addForce(gravity * nodes[i]->mass);
+            // might want to add damp velocity:
+            // nodes[i]->addForce(DEFAULT_DAMPING * nodes[i]->velocity);
+
 		}
 		/** Springs **/
 		for (int i = 0; i < springs.size(); i++)

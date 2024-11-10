@@ -41,7 +41,7 @@ Vec3 windDir;
 Vec3 wind;
 // Cloth
 Vec3 clothPos(-3, 7.5, -2);
-Vec2 clothSize(6, 6);
+Vec2 clothSize(4, 4); //(6, 6)
 Cloth cloth(clothPos, clothSize);
 // Ground
 Vec3 groundPos(-5, 1.5, 0);
@@ -129,7 +129,7 @@ int main(int argc, const char * argv[])
 		            // C_Dot[i] = glm::dot(v1, -dc_dp[i]) + glm::dot(v2, dc_dp[i]);
 		            // deltaP2[i] = glm::vec3(deltaP.x*deltaP.x,deltaP.y*deltaP.y, deltaP.z*deltaP.z);
                 cloth.computeForce(TIME_STEP, gravity); 
-                // need: cloth.calculateDerivatives (the jacobian)
+                cloth.computeForceDerivatives(TIME_STEP) ; // jacobian
                 cloth.integrate(AIR_FRICTION, TIME_STEP);
                 cloth.collisionResponse(&ground, &ball);
             }

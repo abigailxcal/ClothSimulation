@@ -39,6 +39,11 @@ public:
     Vec3 b;
     Mat3 P_matrix;
     Mat3 P_inv;
+    Vec3 C;
+    Vec3 dc_dp;
+    Vec3 C_dot;
+    Mat3 M;
+
     // Vec3    df_dx1; //might need to change the vector type
     // Vec3    df_dx2;
     // Vec3    df_dx3;
@@ -66,6 +71,7 @@ public:
         velocity.setZeroVec();
         force.setZeroVec();
         acceleration.setZeroVec();
+        M = Mat3(mass);
     }
 	~Node(void) {}
 
@@ -73,17 +79,33 @@ public:
 	{
         force += f;
 	}
+    void addForce(Vec3 f, Vec3 c, Vec3 c_dot)
+	{
+        force += f;
+	}
 
     void addForceDerivative(Mat3 dx,Mat3 dv){
         df_dx += dx;
         df_dv += dv;
+        // Debug info
+            // printf("df_dx: (%f, %f, %f)  \n", df_dx.x1, df_dx.y1, df_dx.z1);
+        }
+        //  std::cout << "Failed to create GLFW window." << std::endl;
+        
+    void printPosition(){
+        printf("(%f, %f, %f)" ,position.x, position.y, position.z);
+    }
+
+    void implicit_integration(double deltaTime){
+        float h = deltaTime;
+        float y = 0.0; //correciton term
+        A = M - ((df_dx * h + df_dv) * h); //need to check if the ordering of matrices impacts values
+                                    // because currently, mat3 only takes operations when operand is on the right side of matrix
+
 
     }
-    void implicit_integration(double timeStep){
 
-    }
-           
-
+    
 	void integrate(double timeStep) // Only non-fixed nodes take integration
 	{
 		if (!isFixed) // Verlet integration
