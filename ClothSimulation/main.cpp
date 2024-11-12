@@ -15,8 +15,8 @@
 #include "Headers/Program.h"
 #include "Headers/Display.h"
 
-#define WIDTH 800
-#define HEIGHT 800
+#define WIDTH 500
+#define HEIGHT 500
 
 #define AIR_FRICTION 0.02
 #define TIME_STEP 0.01
@@ -130,8 +130,9 @@ int main(int argc, const char * argv[])
 		            // deltaP2[i] = glm::vec3(deltaP.x*deltaP.x,deltaP.y*deltaP.y, deltaP.z*deltaP.z);
                 cloth.computeForce(TIME_STEP, gravity); 
                 cloth.computeForceDerivatives(TIME_STEP) ; // jacobian
-                cloth.integrate(AIR_FRICTION, TIME_STEP);
-                cloth.collisionResponse(&ground, &ball);
+               // cloth.integrate(AIR_FRICTION, TIME_STEP);
+                cloth.implicit_integration(TIME_STEP);
+                //cloth.collisionResponse(&ground, &ball);
             }
             cloth.computeNormal();
         }

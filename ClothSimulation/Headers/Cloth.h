@@ -11,11 +11,13 @@
 class Cloth
 {
 public:
-    const int nodesDensity = 3; //4
-    const int iterationFreq = 25;
+    const int nodesDensity = 4; //4
+    const int iterationFreq = 4; //25
     const double structuralCoef = 1000.0;
     const double shearCoef = 50.0;
     const double bendingCoef = 400.0;
+    const double DEFAULT_DAMPING = -20.0;
+
     
     enum DrawModeEnum{
         DRAW_NODES,
@@ -93,7 +95,7 @@ public:
                 /** Add node to cloth **/
                 nodes.push_back(node);
                 
-                printf("\t[%d, %d] (%f, %f, %f) - (%f, %f)\n", i, j, node->position.x, node->position.y, node->position.z, node->texCoord.x, node->texCoord.y);
+                // printf("\t[%d, %d] (%f, %f, %f) - (%f, %f)\n", i, j, node->position.x, node->position.y, node->position.z, node->texCoord.x, node->texCoord.y);
             }
             std::cout << std::endl;
         }
@@ -173,9 +175,9 @@ public:
 		for (int i = 0; i < nodes.size(); i++)
 		{
 			nodes[i]->addForce(gravity * nodes[i]->mass);
-            // might want to add damp velocity:
-            // nodes[i]->addForce(DEFAULT_DAMPING * nodes[i]->velocity);
+            // nodes[i]->addForce (nodes[i]->velocity*(DEFAULT_DAMPING));
 
+        
 		}
 		/** Springs **/
 		for (int i = 0; i < springs.size(); i++)
@@ -186,22 +188,17 @@ public:
 
     void computeForceDerivatives(double timeStep)
     {
-	// should the derivatives need to be cleared?
-	// memset(&(df_dx[0]),0,total_points*sizeof(glm::mat3));
-	// memset(&(df_dv[0]),0,total_points*sizeof(glm::mat3));
      for (int i = 0; i < springs.size(); i++)
 		{
             springs[i]->springForceDerivative(); //accesses df_dx,df_dv in Spring.h
-			
 		}   
     }
     void implicit_integration(double timeStep){
         for (int i = 0; i < nodes.size(); i++){
             nodes[i]->implicit_integration(timeStep);
         }
-
+        
     }
-
 
 	void integrate(double airFriction, double timeStep)
 	{
