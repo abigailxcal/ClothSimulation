@@ -12,7 +12,7 @@ class Cloth
 {
 public:
     const int nodesDensity = 4; //4
-    const int iterationFreq = 4; //25
+    const int iterationFreq = 5; //25
     const double structuralCoef = 1000.0;
     const double shearCoef = 50.0;
     const double bendingCoef = 400.0;
@@ -175,7 +175,7 @@ public:
 		for (int i = 0; i < nodes.size(); i++)
 		{
 			nodes[i]->addForce(gravity * nodes[i]->mass);
-            // nodes[i]->addForce (nodes[i]->velocity*(DEFAULT_DAMPING));
+            nodes[i]->addForce (nodes[i]->velocity*(DEFAULT_DAMPING));
 
         
 		}
@@ -200,14 +200,14 @@ public:
         
     }
 
-	void integrate(double airFriction, double timeStep)
-	{
-        /** Node **/
-        for (int i = 0; i < nodes.size(); i++)
-        {
-            nodes[i]->integrate(timeStep);
-        }
-	}
+	// void integrate(double airFriction, double timeStep)
+	// {
+    //     /** Node **/
+    //     for (int i = 0; i < nodes.size(); i++)
+    //     {
+    //         nodes[i]->integrate(timeStep);
+    //     }
+	// }
 	
     Vec3 getWorldPos(Node* n) { return clothPos + n->position; }
     void setWorldPos(Node* n, Vec3 pos) { n->position = pos - clothPos; }
