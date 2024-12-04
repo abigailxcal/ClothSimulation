@@ -118,6 +118,10 @@ public:
         printf("printing force ");
         printf("(%f, %f, %f)\n" ,force.x, force.y, force.z);
     }
+    void printVelocity(){
+        printf("printing velocity ");
+        printf("(%f, %f, %f)\n" ,velocity.x, velocity.y, velocity.z);
+    }
     void printForceDerivatives(){
         printf("printing df_dx and df_dv: ");
         // printf("printing jacobian: \n ");

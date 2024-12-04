@@ -1,4 +1,5 @@
 #pragma once
+
 #include "Points.h"
 #include <vector>
 #include <glm/glm.hpp>
@@ -31,7 +32,7 @@ public:
     Mat3 d2C_dp1p2;
     Mat3 d2C_dp2p1;
     Mat3 d2C_dp2p2;
-    const double DEFAULT_DAMPING = 5.0;
+    
 
 
     
@@ -42,7 +43,7 @@ public:
         Vec3 currSp = node2->position - node1->position;
         restLength = currSp.length();   //rest length
         Ks = k;
-        Kd = 10.0;
+        Kd = k*0.02;
         C = 0.0;
         //printf("Spring initialized: Ks = %f, Kd = %f\n", Ks, Kd);
         // deltaP.setZeroVec();

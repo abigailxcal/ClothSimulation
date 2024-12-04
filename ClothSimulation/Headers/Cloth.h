@@ -1,5 +1,6 @@
 #pragma once
-
+#include <Eigen/Sparse>
+#include <Eigen/IterativeLinearSolvers>
 #include <vector>
 #include <vector>
 #include <glm/glm.hpp>
@@ -11,12 +12,33 @@
 class Cloth
 {
 public:
+
+
+    //Structural coeff: how well a cloth miantains its basic grid structure
+    // high values = more rigid, low values = more stretch
+    // rec: 200-500 N/m 
+
+    //shearing coeff: how cloth miantains shape when stretched diagonally
+    // low = unrealistic shearing
+    // red: slightly lower than structural stiffness, 100-300 N/m
+
+
+    // bending: resistance to out of plane bending
+    // low = floppy, high = paper like 
+    // 
+
+    // damping coeff: controls the dissipation of energy to prevent endlesss oscillations
+    // low damping = allow oscilllations to persist 
+
     const int nodesDensity = 4; //4
-    const int iterationFreq = 5; //25
-    const double structuralCoef = 1000.0;
-    const double shearCoef = 50.0;
-    const double bendingCoef = 400.0;
-    const double DEFAULT_DAMPING = -20.0;
+    const int iterationFreq = 2; //25
+    // const double structuralCoef = 1000;
+    // const double shearCoef = 200;
+    // const double bendingCoef = 400;
+    const double structuralCoef = 1000;
+    const double shearCoef = 300;
+    const double bendingCoef = 20;
+    const double DEFAULT_DAMPING =  45.0;
 
     
     enum DrawModeEnum{
@@ -175,7 +197,11 @@ public:
 		for (int i = 0; i < nodes.size(); i++)
 		{
 			nodes[i]->addForce(gravity * nodes[i]->mass);
-            nodes[i]->addForce (nodes[i]->velocity*(DEFAULT_DAMPING));
+            //printf("Force before damping:\n");
+            //nodes[i]->printForce();
+            nodes[i]->addForce (nodes[i]->velocity*(DEFAULT_DAMPING)*(-1.0));
+            //printf("Force after damping:\n");
+            //nodes[i]->printForce();
 
         
 		}
@@ -184,6 +210,13 @@ public:
 		{
 			springs[i]->applyInternalForce(timeStep);
 		}
+        // for (int i = 0; i < nodes.size(); i++)
+		// {
+        //     nodes[i]->addForce (nodes[i]->velocity*(DEFAULT_DAMPING)*(-1.0));
+
+        
+		// }
+        
 	}
 
     void computeForceDerivatives(double timeStep)
