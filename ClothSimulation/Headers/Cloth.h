@@ -8,39 +8,41 @@
 #include <glm/gtc/type_ptr.hpp>
 #include "Spring.h"
 #include "Rigid.h"
+#include "large_vector.h"
 
+ //Structural coeff: how well a cloth miantains its basic grid structure
+ // high values = more rigid, low values = more stretch
+ // rec: 200-500 N/m 
+ //shearing coeff: how cloth miantains shape when stretched diagonally
+ // low = unrealistic shearing
+ // red: slightly lower than structural stiffness, 100-300 N/m
+ // bending: resistance to out of plane bending
+ // low = floppy, high = paper like 
+ // 
+ // damping coeff: controls the dissipation of energy to prevent endlesss oscillations
+ // low damping = allow oscilllations to persist 
+
+// The whole point of this program is to use implicit integration and CGM to solve the update equation
+// for veloctiy at the current time step, which is then used to solve the update equation for position.
+// the position vectors of each node at the current time step is what the cloth renderers use to 
+// simulate the behavior. 
 class Cloth
 {
 public:
-
-
-    //Structural coeff: how well a cloth miantains its basic grid structure
-    // high values = more rigid, low values = more stretch
-    // rec: 200-500 N/m 
-
-    //shearing coeff: how cloth miantains shape when stretched diagonally
-    // low = unrealistic shearing
-    // red: slightly lower than structural stiffness, 100-300 N/m
-
-
-    // bending: resistance to out of plane bending
-    // low = floppy, high = paper like 
-    // 
-
-    // damping coeff: controls the dissipation of energy to prevent endlesss oscillations
-    // low damping = allow oscilllations to persist 
-
     const int nodesDensity = 4; //4
     const int iterationFreq = 2; //25
-    // const double structuralCoef = 1000;
-    // const double shearCoef = 200;
-    // const double bendingCoef = 400;
     const double structuralCoef = 1000;
     const double shearCoef = 300;
     const double bendingCoef = 20;
     const double DEFAULT_DAMPING =  45.0;
+    LargeVector<glm::vec3> dV;
+    LargeVector<glm::mat3> A;
+    glm::mat3 M = glm::mat3(1.0f);
+    LargeVector<glm::vec3> b;
+    LargeVector<glm::vec3> P_;
+    LargeVector<glm::vec3> P_inv;
+    vector<float> inv_len;
 
-    
     enum DrawModeEnum{
         DRAW_NODES,
         DRAW_LINES,
@@ -60,15 +62,13 @@ public:
     Vec2 pin1;
     Vec2 pin2;
     
-	Cloth(Vec3 pos, Vec2 size)
-	{
+	Cloth(Vec3 pos, Vec2 size){
         clothPos = pos;
         width = size.x;
         height = size.y;
         init();
 	}
-	~Cloth()
-	{ 
+	~Cloth(){ 
 		for (int i = 0; i < nodes.size(); i++) { delete nodes[i]; }
 		for (int i = 0; i < springs.size(); i++) { delete springs[i]; }
 		nodes.clear();
@@ -78,27 +78,23 @@ public:
  
 public:
     Node* getNode(int x, int y) { return nodes[y*nodesPerRow+x]; }
-    Vec3 computeFaceNormal(Node* n1, Node* n2, Node* n3)
-    {
+    Vec3 computeFaceNormal(Node* n1, Node* n2, Node* n3){
         return Vec3::cross(n2->position - n1->position, n3->position - n1->position);
     }
     
-    void pin(Vec2 index, Vec3 offset) // Pin cloth's (x, y) node with offset
-    {
+    void pin(Vec2 index, Vec3 offset){ // Pin cloth's (x, y) node with offset
         if (!(index.x < 0 || index.x >= nodesPerRow || index.y < 0 || index.y >= nodesPerCol)) {
             getNode(index.x, index.y)->position += offset;
             getNode(index.x, index.y)->isFixed = true;
         }
     }
-    void unPin(Vec2 index) // Unpin cloth's (x, y) node
-    {
+    void unPin(Vec2 index){ // Unpin cloth's (x, y) node
         if (!(index.x < 0 || index.x >= nodesPerRow || index.y < 0 || index.y >= nodesPerCol)) {
             getNode(index.x, index.y)->isFixed = false;
         }
     }
-    
-	void init()
-	{
+    // Initial Cloth: add nodes, add springs to govern the behavior of those nodes, pin two corners/nodes of the cloth
+	void init(){
         nodesPerRow = width * nodesDensity;
         nodesPerCol = height * nodesDensity;
         
@@ -115,9 +111,7 @@ public:
                 node->texCoord.x = (double)j/(nodesPerRow-1);
                 node->texCoord.y = (double)i/(1-nodesPerCol);
                 /** Add node to cloth **/
-                nodes.push_back(node);
-                
-                // printf("\t[%d, %d] (%f, %f, %f) - (%f, %f)\n", i, j, node->position.x, node->position.y, node->position.z, node->texCoord.x, node->texCoord.y);
+                nodes.push_back(node); 
             }
             std::cout << std::endl;
         }
@@ -157,8 +151,7 @@ public:
         }
 	}
 	
-	void computeNormal()
-	{
+	void computeNormal(){
         /** Reset nodes' normal **/
         Vec3 normal(0.0, 0.0, 0.0);
         for (int i = 0; i < nodes.size(); i ++) {
@@ -182,47 +175,30 @@ public:
             nodes[i]->normal.normalize();
         }
 	}
-	
-	void addForce(Vec3 f)
-	{		 
-		for (int i = 0; i < nodes.size(); i++)
-		{
+	//
+	void addForce(Vec3 f){		 
+		for (int i = 0; i < nodes.size(); i++){
 			nodes[i]->addForce(f);
 		}
 	}
 
-	void computeForce(double timeStep, Vec3 gravity)
-	{
+	void computeForce(double timeStep, Vec3 gravity){
         /** Nodes **/
-		for (int i = 0; i < nodes.size(); i++)
-		{
+		for (int i = 0; i < nodes.size(); i++){
 			nodes[i]->addForce(gravity * nodes[i]->mass);
-            //printf("Force before damping:\n");
-            //nodes[i]->printForce();
             nodes[i]->addForce (nodes[i]->velocity*(DEFAULT_DAMPING)*(-1.0));
-            //printf("Force after damping:\n");
-            //nodes[i]->printForce();
-
-        
 		}
 		/** Springs **/
-		for (int i = 0; i < springs.size(); i++)
-		{
+		for (int i = 0; i < springs.size(); i++){
 			springs[i]->applyInternalForce(timeStep);
-		}
-        // for (int i = 0; i < nodes.size(); i++)
-		// {
-        //     nodes[i]->addForce (nodes[i]->velocity*(DEFAULT_DAMPING)*(-1.0));
-
-        
-		// }
-        
+		}   
 	}
-
-    void computeForceDerivatives(double timeStep)
-    {
-     for (int i = 0; i < springs.size(); i++)
-		{
+    // forces are calculated via springs, which get stored in the node
+    // EDIT: to keep things consistent, cloth should call functions of nodes 
+    // as much as possible. So change this so that node has a function to get it's 
+    // force derivates from springs
+    void computeForceDerivatives(double timeStep){
+     for (int i = 0; i < springs.size(); i++){
             springs[i]->springForceDerivative(); //accesses df_dx,df_dv in Spring.h
 		}   
     }
@@ -230,17 +206,7 @@ public:
         for (int i = 0; i < nodes.size(); i++){
             nodes[i]->implicit_integration(timeStep);
         }
-        
     }
-
-	// void integrate(double airFriction, double timeStep)
-	// {
-    //     /** Node **/
-    //     for (int i = 0; i < nodes.size(); i++)
-    //     {
-    //         nodes[i]->integrate(timeStep);
-    //     }
-	// }
 	
     Vec3 getWorldPos(Node* n) { return clothPos + n->position; }
     void setWorldPos(Node* n, Vec3 pos) { n->position = pos - clothPos; }
@@ -266,4 +232,65 @@ public:
             }
         }
 	}
+    // --------------- for preconditioned conjugate gradient method ----------------------
+    void implicit_integration_cgm(double timeStep){
+        A.resize(nodes.size());
+        b.resize(nodes.size());
+        dV.resize(nodes.size());
+        P_.resize(nodes.size());
+        P_inv.resize(nodes.size());
+        if (A.size() != nodes.size()) {
+    std::cerr << "Mismatch between A and nodes sizes!" << std::endl;
+    return;
+}
+     for (int i = 0; i < nodes.size(); i++){
+         if (nodes[i] && !nodes[i]->isFixed) {
+        A[i] = nodes[i]->calculateA(timeStep);
+        b[i] = nodes[i]->calculate_b(timeStep);
+        P_[i] = nodes[i]->calculateP();
+        P_inv[i] = nodes[i]->calculateP_inv();
+        }
+     }
+
+     SolveConjugateGradientPreconditioned(A,dV,b,P_,P_inv);
+     for(int i=0;i<nodes.size();i++) {
+		nodes[i]->apply_PCGM(timeStep,dV[i]);
+		// if(X[i].y <0) {       //dunno if i need this
+		// 	X[i].y = 0;         // Update: defintely don't need this. It causes degenerate springs. 
+                                // But why tho? 
+		// }
+	}
+ }
+ void SolveConjugateGradientPreconditioned(LargeVector<glm::mat3> A, LargeVector<glm::vec3>& x, LargeVector<glm::vec3> b,LargeVector<glm::vec3> P, LargeVector<glm::vec3> P_inv) {
+	float i =0;
+    int i_max = 10;
+    float EPS=0.001f;
+    float EPS2 = EPS*EPS;
+	LargeVector<glm::vec3> r =  (b - A*x);
+	LargeVector<glm::vec3> d = P_inv*r;
+	LargeVector<glm::vec3> q;
+	float alpha_new = 0;
+	float alpha = 0;
+	float beta  = 0;
+	float delta_old = 0;
+	float delta_new = dot(r,P*r);
+	float delta0    = delta_new;
+	while(i<i_max && delta_new> EPS2*delta0) {
+		q = A*d;
+		alpha = delta_new/dot(d,q);
+		x = x + alpha*d;
+		r = r - alpha*q;
+		delta_old = delta_new;
+		delta_new = dot(r,r);
+		beta = delta_new/delta_old;
+		d = r + beta*d;
+		i++;
+	}
+    if (i > 3)
+        {
+            printf("Converged at iteration %f \n", i);
+        }
+
+}
+
 };
