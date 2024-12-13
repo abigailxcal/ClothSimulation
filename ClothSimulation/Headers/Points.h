@@ -2,9 +2,11 @@
 
 #include "Vectors.h"
 #include <vector>
+#include <fstream>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
 
 struct Vertex
 {
@@ -68,7 +70,6 @@ public:
         velocity.setZeroVec();
         force.setZeroVec();
         acceleration.setZeroVec();
-        // M = Mat3(mass);
         M.setIdentity();
         df_dx.setZeromat3();
         df_dv.setZeromat3();
@@ -102,64 +103,27 @@ public:
         df_dv.setZeromat3();
     }
 
-    void printPosition()
-    {
-        printf("printing position ");
-        printf("(%f, %f, %f)\n", position.x, position.y, position.z);
-    }
-    void printForce()
-    {
-        printf("printing force ");
-        printf("(%f, %f, %f)\n", force.x, force.y, force.z);
-    }
-    void printVelocity()
-    {
-        printf("printing velocity ");
-        printf("(%f, %f, %f)\n", velocity.x, velocity.y, velocity.z);
-    }
-    void printForceDerivatives()
-    {
-        printf("printing df_dx and df_dv: ");
-        // printf("printing jacobian: \n ");
-        // j.printMat3();
-        df_dx.printMat3();
-        df_dv.printMat3();
-    }
-
-    void implicit_integration(double deltaTime)
-    {
-        if (!isFixed)
-        {
+    /*---------- CGM3 Implementation: solves dv individually for each point */
+    void implicit_integration(double deltaTime){
+        if (!isFixed){
             float h = deltaTime;
-            float y = 0.0;                                    // correciton term
-            A = M - ((df_dv + (df_dx * h)) * h);              //  A = M - K*deltaTime
-            b = ((force + (df_dx * (velocity + y) * h)) * h); // A was modified but b hasn't been
-            printf("Dimension of A");
-            A.printMat3();
-            printf("Dimension of deltaV");
-            A.printMat3();
-            printf("Dimension of b");
-            b.printVec3();
+            float y = 0.0; //correciton term
+            A =  M - ((df_dv + (df_dx * h))*h);
+            b = ((force + (df_dx * ( velocity + y) * h)) * h); //A was modified by b hasn't been 
+            
+            //auto start = std::chrono::high_resolution_clock::now();
+            solveConjugateGradient(A, deltaV, b, deltaTime);
 
-            solveConjugateGradient(A, deltaV, b);
-            velocity += (deltaV * deltaTime);
-            position += velocity * deltaTime;
-            // printf("new pos: ");
-            // position.printVec3();
-            // printf("new velocity: ");
-            // velocity.printVec3();
+            //auto end = std::chrono::high_resolution_clock::now();
+            //auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+            //printf("CGM Convergence Time: %lld ms\n", duration.count());
+            velocity += (deltaV*deltaTime);
+            position += velocity*deltaTime;
         }
-        force.setZeroVec();
-        df_dx.setZeromat3();
-        df_dv.setZeromat3();
+        resetForces();
     }
 
-    // to solve CGM Preconditioned, i think i need to create functions in cloth that populate the large matrices/vectors
-    // A, b, P_, and P_inv with corresp values from each node in the cloth
-    // Then, i call the preconditioned CGM in Cloth and distribute the new velocity and position to each node
-    // Also, if i were to do that, i would need to convert Vec3/Mat3 into datatypes compatible with LargeVector<glm>
-    // After CGM is solved, convert LargeVector<glm> back into Vec3/Mat3
-    void solveConjugateGradient(Mat3 A, Vec3 &x, Vec3 b)
+    void solveConjugateGradient(Mat3 A, Vec3 &x, Vec3 b,double timeStep)
     {
         int i_max = 10;
         float EPS = 0.001f;
@@ -185,11 +149,14 @@ public:
             d = r + (d * beta);
             i++;
         }
-        if (i > 3)
+        //logIterations(timeStep, i);
+        if (i >2)
         {
             printf("Converged at iteration %f \n", i);
         }
     }
+
+
      // --------------- for preconditioned conjugate gradient method ----------------------
     glm::mat3 calculateA(double deltaTime)
     {
@@ -233,7 +200,16 @@ public:
         Vec3 dV = Vec3(dv[0], dv[1], dv[2]);
         velocity += (dV * deltaTime);
         position += velocity * deltaTime;
-        
         resetForces();
     }
+
+    void logIterations(double timeStep, int iterations) {
+    std::ofstream logFile("iterations.log", std::ios::app); // Open file in append mode
+    if (logFile.is_open()) {
+        logFile << timeStep << " " << iterations << "\n";   // Log time step and iterations
+        logFile.close();                                   // Close the file
+    } else {
+        std::cerr << "Error: Could not open iterations.log for writing." << std::endl;
+    }
+}
 };

@@ -540,16 +540,16 @@ struct GroundRender
     void flush() { render.flush(); }
 };
 
-struct BallRender
-{
-    Ball* ball;
-    RigidRender render;
+// struct BallRender
+// {
+//     Ball* ball;
+//     RigidRender render;
     
-    BallRender(Ball* b)
-    {
-        ball = b;
-        render.init(ball->sphere->faces, ball->color, glm::vec3(ball->center.x, ball->center.y, ball->center.z));
-    }
+//     BallRender(Ball* b)
+//     {
+//         ball = b;
+//         render.init(ball->sphere->faces, ball->color, glm::vec3(ball->center.x, ball->center.y, ball->center.z));
+//     }
     
-    void flush() { render.flush(); }
-};
+//     void flush() { render.flush(); }
+// };

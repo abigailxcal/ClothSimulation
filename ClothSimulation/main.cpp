@@ -15,11 +15,12 @@
 #include "Headers/Program.h"
 #include "Headers/Display.h"
 
-#define WIDTH 600
-#define HEIGHT 600
+#define WIDTH 900
+#define HEIGHT 900
 
 #define AIR_FRICTION 0.02
-#define TIME_STEP 0.01
+#define TIME_STEP 0.02 // at 0.03, convergence increases to > 5
+
 
 /** Executing Flow **/
 int running = 1;
@@ -49,14 +50,14 @@ Vec2 groundSize(10, 10);
 glm::vec4 groundColor(0.8, 0.8, 0.8, 1.0);
 Ground ground(groundPos, groundSize, groundColor);
 // Ball
-Vec3 ballPos(0, 3, -2); //(0, 3, -2);
-int ballRadius = 1;
-glm::vec4 ballColor(0.6f, 0.5f, 0.8f, 1.0f);
-Ball ball(ballPos, ballRadius, ballColor);
+// Vec3 ballPos(0, 3, -2); //(0, 3, -2);
+// int ballRadius = 1;
+// glm::vec4 ballColor(0.6f, 0.5f, 0.8f, 1.0f);
+// Ball ball(ballPos, ballRadius, ballColor);
 // Window and world
 GLFWwindow *window;
 Vec3 bgColor = Vec3(50.0/255, 50.0/255, 60.0/255);
-Vec3 gravity(0.0, -9.8, 0.0);
+Vec3 gravity(0.0, -9.81, 0.0);
 
 int main(int argc, const char * argv[])
 {
@@ -100,9 +101,9 @@ int main(int argc, const char * argv[])
     ClothRender clothRender(&cloth);
     ClothSpringRender clothSpringRender(&cloth);
     GroundRender groundRender(&ground);
-    BallRender ballRender(&ball);
+    // BallRender ballRender(&ball);
     
-    Vec3 initForce(10.0, 40.0, 20.0);
+    Vec3 initForce(5.0, 10.0, 5.0);
     cloth.addForce(initForce);
     
     glEnable(GL_DEPTH_TEST);
@@ -131,9 +132,9 @@ int main(int argc, const char * argv[])
                 cloth.computeForce(TIME_STEP, gravity); 
                 cloth.computeForceDerivatives(TIME_STEP) ; // jacobian
                
-                //cloth.implicit_integration(TIME_STEP);
-                cloth.implicit_integration_cgm(TIME_STEP);
-                //cloth.collisionResponse(&ground, &ball);
+                cloth.implicit_integration(TIME_STEP);
+                //cloth.implicit_integration_cgm(TIME_STEP);
+                cloth.collisionResponse(&ground);
             }
             cloth.computeNormal();
         }
@@ -144,7 +145,7 @@ int main(int argc, const char * argv[])
         } else {
             clothRender.flush();
         }
-        ballRender.flush();
+        // ballRender.flush();
         groundRender.flush();
         
         /** -------------------------------- Simulation & Rendering -------------------------------- **/

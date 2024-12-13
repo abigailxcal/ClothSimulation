@@ -30,11 +30,15 @@ class Cloth
 {
 public:
     const int nodesDensity = 4; //4
-    const int iterationFreq = 2; //25
+    const int iterationFreq = 15; //25
     const double structuralCoef = 1000;
     const double shearCoef = 300;
     const double bendingCoef = 20;
     const double DEFAULT_DAMPING =  45.0;
+    // const double structuralCoef = 0.75;
+    // const double shearCoef = 0.75;
+    // const double bendingCoef = 0.95;
+    // const double DEFAULT_DAMPING =  0.125;
     LargeVector<glm::vec3> dV;
     LargeVector<glm::mat3> A;
     glm::mat3 M = glm::mat3(1.0f);
@@ -48,7 +52,8 @@ public:
         DRAW_LINES,
         DRAW_FACES
     };
-    DrawModeEnum drawMode = DRAW_FACES;
+    // DrawModeEnum drawMode = DRAW_FACES;
+    DrawModeEnum drawMode = DRAW_LINES;
     
     Vec3 clothPos;
     
@@ -202,16 +207,19 @@ public:
             springs[i]->springForceDerivative(); //accesses df_dx,df_dv in Spring.h
 		}   
     }
+
     void implicit_integration(double timeStep){
         for (int i = 0; i < nodes.size(); i++){
             nodes[i]->implicit_integration(timeStep);
-        }
+        }     
     }
-	
+
+    
     Vec3 getWorldPos(Node* n) { return clothPos + n->position; }
     void setWorldPos(Node* n, Vec3 pos) { n->position = pos - clothPos; }
     
-	void collisionResponse(Ground* ground, Ball* ball)
+	void collisionResponse(Ground* ground)
+    // void collisionResponse(Ground* ground, Ball* ball)
 	{
         for (int i = 0; i < nodes.size(); i++)
         {
@@ -222,14 +230,14 @@ public:
             }
             
             /** Ball collision **/
-            Vec3 distVec = getWorldPos(nodes[i]) - ball->center;
-            double distLen = distVec.length();
-            double safeDist = ball->radius*1.05;
-            if (distLen < safeDist) {
-                distVec.normalize();
-                setWorldPos(nodes[i], distVec*safeDist+ball->center);
-                nodes[i]->velocity = nodes[i]->velocity*ball->friction;
-            }
+            // Vec3 distVec = getWorldPos(nodes[i]) - ball->center;
+            // double distLen = distVec.length();
+            // double safeDist = ball->radius*1.05;
+            // if (distLen < safeDist) {
+            //     distVec.normalize();
+            //     setWorldPos(nodes[i], distVec*safeDist+ball->center);
+            //     nodes[i]->velocity = nodes[i]->velocity*ball->friction;
+            // }
         }
 	}
     // --------------- for preconditioned conjugate gradient method ----------------------
@@ -254,11 +262,9 @@ public:
 
      SolveConjugateGradientPreconditioned(A,dV,b,P_,P_inv);
      for(int i=0;i<nodes.size();i++) {
+        if (nodes[i] && !nodes[i]->isFixed) {
 		nodes[i]->apply_PCGM(timeStep,dV[i]);
-		// if(X[i].y <0) {       //dunno if i need this
-		// 	X[i].y = 0;         // Update: defintely don't need this. It causes degenerate springs. 
-                                // But why tho? 
-		// }
+        }
 	}
  }
  void SolveConjugateGradientPreconditioned(LargeVector<glm::mat3> A, LargeVector<glm::vec3>& x, LargeVector<glm::vec3> b,LargeVector<glm::vec3> P, LargeVector<glm::vec3> P_inv) {
