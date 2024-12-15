@@ -19,7 +19,7 @@
 #define WIDTH 600
 #define HEIGHT 600
 #define AIR_FRICTION 0.02
-#define TIME_STEP 0.3 // 0.03 increases convergence to 3 when performing CGM in smaller scope
+#define TIME_STEP 0.4 // 0.03 increases convergence to 3 when performing CGM in smaller scope
 
 /** Executing Flow **/
 int running = 1;
@@ -33,7 +33,7 @@ Vec3 windDir;
 Vec3 wind;
 // Cloth
 Vec3 clothPos(-2, 7.5, -2);
-Vec2 clothSize(4, 4); //(6, 6)
+Vec2 clothSize(5, 5); //(6, 6)
 Cloth cloth(clothPos, clothSize);
 // Ground
 Vec3 groundPos(-5, 1.5, 0);
@@ -127,6 +127,7 @@ int main(int argc, const char * argv[])
             //     //cloth.implicit_integration_cgm(TIME_STEP);
             //     cloth.collisionResponse(&ground);
             // }
+            cloth.createTargetNodes();
             cloth.computeForce(TIME_STEP, gravity);
             cloth.computeForceDerivatives(TIME_STEP); // jacobian
             cloth.implicit_integration_simple(TIME_STEP);

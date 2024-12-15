@@ -110,4 +110,12 @@ public:
         df_dv = (dp1 + dp2 + dp3)*(-Kd);  // should it be -kd or +kd?
         node1->addForceDerivative(df_dx,df_dv);
     }
+
+    void logDerivatives() {
+        std::cout << "df_dx: \n";
+        df_dx.printMat3();
+        std::cout << "df_dv: \n";
+        df_dv.printMat3();
+
+    }
 };

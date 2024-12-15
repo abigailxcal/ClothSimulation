@@ -9,6 +9,7 @@
 #include "Spring.h"
 #include "Rigid.h"
 #include "large_vector.h"
+#include <list>
 
  //Structural coeff: how well a cloth miantains its basic grid structure
  // high values = more rigid, low values = more stretch
@@ -38,7 +39,7 @@ public:
     const double structuralCoef = 0.950;
     const double shearCoef = 0.15;
     const double bendingCoef = 0.02;
-    const double DEFAULT_DAMPING =  0.5;
+    const double DEFAULT_DAMPING =  0.7;    // maybe when time step exceeds 0.3, damping needs to be bigger than 0.5?
     LargeVector<glm::vec3> dV;
     LargeVector<glm::mat3> A;
     glm::mat3 M = glm::mat3(1.0f);
@@ -46,6 +47,12 @@ public:
     LargeVector<glm::vec3> P_;
     LargeVector<glm::vec3> P_inv;
     vector<float> inv_len;
+
+// ------------- Logging --------------
+    int targetNode = 10; 
+    int targetSpring = 5;    // The spring to log data for
+    bool logDerivatives = true; // Toggle for force derivatives
+    std::list<int>targets;
 
     enum DrawModeEnum{
         DRAW_NODES,
@@ -154,7 +161,16 @@ public:
                 faces.push_back(getNode(i, j+1));
             }
         }
+        targets.push_back(5);
+        targets.push_back(22);
+        targets.push_back(193);
+        
 	}
+    void createTargetNodes(){
+        for (int idx: targets){
+            nodes[idx]->istarget(idx);
+        }
+    }
 	
 	void computeNormal(){
         /** Reset nodes' normal **/
@@ -190,14 +206,26 @@ public:
 	void computeForce(double timeStep, Vec3 gravity){
         /** Nodes **/
 		for (int i = 0; i < nodes.size(); i++){
-            //nodes[i]->resetForces();
-			nodes[i]->addForce(gravity * nodes[i]->mass);
+            
+            nodes[i]->addForce(gravity * nodes[i]->mass);
             nodes[i]->addForce (nodes[i]->velocity*(DEFAULT_DAMPING)*(-1.0));
+            
+            
 		}
 		/** Springs **/
 		for (int i = 0; i < springs.size(); i++){
 			springs[i]->applyInternalForce(timeStep);
-		}   
+		} 
+        // for (int i = 0; i < nodes.size(); i++){
+        //     if (i==targetNode){
+        //         nodes[i]->istarget();
+        //     //nodes[i]->resetForces();
+        //     std::cout << "==================== Node" << i << " ====================\n";
+        //     std::cout << "Position: (" << nodes[i]->position.x << ", " << nodes[i]->position.y << ", " << nodes[i]->position.z << ")\n";
+        //     std::cout << "Internal Forces: (" << nodes[i]->force.x << ", " << nodes[i]->force.y << ", " << nodes[i]->force.z << ")\n";
+        //     std::cout << "Velocity: (" << nodes[i]->velocity.x << ", " << nodes[i]->velocity.y << ", " << nodes[i]->velocity.z << ")\n";
+        //     }
+        // }  
 	}
     // forces are calculated via springs, which get stored in the node
     // EDIT: to keep things consistent, cloth should call functions of nodes 
@@ -206,11 +234,16 @@ public:
     void computeForceDerivatives(double timeStep){
      for (int i = 0; i < springs.size(); i++){
             springs[i]->springForceDerivative(); //accesses df_dx,df_dv in Spring.h
+            // if (i==targetSpring) {
+            //     springs[i]->logDerivatives();
+
+            // }
 		}   
     }
 
     void implicit_integration_simple(double timeStep){
         for (int i = 0; i < nodes.size(); i++){
+            
             nodes[i]->implicit_integration(timeStep);
         }     
     }
