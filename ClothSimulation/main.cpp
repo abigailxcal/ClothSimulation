@@ -19,7 +19,7 @@
 #define WIDTH 600
 #define HEIGHT 600
 #define AIR_FRICTION 0.02
-#define TIME_STEP 0.03 // 0.03 increases convergence to 3 when performing CGM in smaller scope
+#define TIME_STEP 0.3 // 0.03 increases convergence to 3 when performing CGM in smaller scope
 
 /** Executing Flow **/
 int running = 1;
@@ -27,7 +27,7 @@ int running = 1;
 /** Global **/
 // Wind
 int windBlowing = 0;
-int windForceScale = 15; //15
+int windForceScale = 0; //15
 Vec3 windStartPos;
 Vec3 windDir;
 Vec3 wind;
@@ -42,7 +42,8 @@ glm::vec4 groundColor(0.8, 0.8, 0.8, 1.0);
 Ground ground(groundPos, groundSize, groundColor);
 
 Vec3 bgColor = Vec3(50.0/255, 50.0/255, 60.0/255);
-Vec3 gravity(0.0, -9.81, 0.0);
+// Vec3 gravity(0.0, -9.81, 0.0);
+Vec3 gravity(0.0, -0.00981, 0.0);
 
 
 /** Functions **/
@@ -99,8 +100,8 @@ int main(int argc, const char * argv[])
     GroundRender groundRender(&ground);
     // BallRender ballRender(&ball);
     
-    Vec3 initForce(5.0, 10.0, 5.0);
-    cloth.addForce(initForce);
+    // Vec3 initForce(5.0, 10.0, 5.0);
+    // cloth.addForce(initForce);
     
     glEnable(GL_DEPTH_TEST);
     glPointSize(3);
@@ -119,13 +120,18 @@ int main(int argc, const char * argv[])
         /** -------------------------------- Simulation & Rendering -------------------------------- **/
         
         if (running) {
-            for (int i = 0; i < cloth.iterationFreq; i ++) {
-                cloth.computeForce(TIME_STEP, gravity); 
-                cloth.computeForceDerivatives(TIME_STEP) ; // jacobian
-                cloth.implicit_integration(TIME_STEP);
-                //cloth.implicit_integration_cgm(TIME_STEP);
-                cloth.collisionResponse(&ground);
-            }
+            // for (int i = 0; i < cloth.iterationFreq; i ++) {
+            //     cloth.computeForce(TIME_STEP, gravity); 
+            //     cloth.computeForceDerivatives(TIME_STEP) ; // jacobian
+            //     cloth.implicit_integration(TIME_STEP);
+            //     //cloth.implicit_integration_cgm(TIME_STEP);
+            //     cloth.collisionResponse(&ground);
+            // }
+            cloth.computeForce(TIME_STEP, gravity);
+            cloth.computeForceDerivatives(TIME_STEP); // jacobian
+            cloth.implicit_integration_simple(TIME_STEP);
+            // cloth.implicit_integration_cgm(TIME_STEP);
+            cloth.collisionResponse(&ground);
             cloth.computeNormal();
         }
         

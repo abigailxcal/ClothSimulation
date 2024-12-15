@@ -44,7 +44,7 @@ public:
         Vec3 currSp = node2->position - node1->position;
         restLength = currSp.length();   
         Ks = k;
-        Kd = k*0.02;
+        Kd = 0.25;
         C = 0.0;
         deltaP2 = Vec3(0.0);
         dc_dp = Vec3(0.0);

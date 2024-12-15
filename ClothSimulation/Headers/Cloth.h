@@ -31,14 +31,14 @@ class Cloth
 public:
     const int nodesDensity = 4; //4
     const int iterationFreq = 15; //25
-    const double structuralCoef = 1000;
-    const double shearCoef = 300;
-    const double bendingCoef = 20;
-    const double DEFAULT_DAMPING =  45.0;
-    // const double structuralCoef = 0.75;
-    // const double shearCoef = 0.75;
-    // const double bendingCoef = 0.95;
-    // const double DEFAULT_DAMPING =  0.125;
+    // const double structuralCoef = 1000;
+    // const double shearCoef = 300;
+    // const double bendingCoef = 20;
+    // const double DEFAULT_DAMPING =  45.0;
+    const double structuralCoef = 0.950;
+    const double shearCoef = 0.15;
+    const double bendingCoef = 0.02;
+    const double DEFAULT_DAMPING =  0.5;
     LargeVector<glm::vec3> dV;
     LargeVector<glm::mat3> A;
     glm::mat3 M = glm::mat3(1.0f);
@@ -190,6 +190,7 @@ public:
 	void computeForce(double timeStep, Vec3 gravity){
         /** Nodes **/
 		for (int i = 0; i < nodes.size(); i++){
+            //nodes[i]->resetForces();
 			nodes[i]->addForce(gravity * nodes[i]->mass);
             nodes[i]->addForce (nodes[i]->velocity*(DEFAULT_DAMPING)*(-1.0));
 		}
@@ -208,7 +209,7 @@ public:
 		}   
     }
 
-    void implicit_integration(double timeStep){
+    void implicit_integration_simple(double timeStep){
         for (int i = 0; i < nodes.size(); i++){
             nodes[i]->implicit_integration(timeStep);
         }     

@@ -112,7 +112,7 @@ public:
             b = ((force + (df_dx * ( velocity + y) * h)) * h); //A was modified by b hasn't been 
             
             //auto start = std::chrono::high_resolution_clock::now();
-            solveConjugateGradient(A, deltaV, b, deltaTime);
+            solveConjugateGradient3(A, deltaV, b, deltaTime);
             //auto end = std::chrono::high_resolution_clock::now();
             //auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
             //printf("CGM Convergence Time: %lld ms\n", duration.count());
@@ -122,7 +122,7 @@ public:
         resetForces();
     }
 
-    void solveConjugateGradient(Mat3 A, Vec3 &x, Vec3 b,double timeStep)
+    void solveConjugateGradient3(Mat3 A, Vec3 &x, Vec3 b,double timeStep)
     {
         int i_max = 10;
         float EPS = 0.001f;
