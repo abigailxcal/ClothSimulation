@@ -12,17 +12,23 @@ using namespace std;
 class Spring
 {
 public:
+
+    // actual spring properties
     Node *node1;
     Node *node2;
 	double restLength;
     double Ks;
     double Kd;
-    double C;
-    double C_Dot;
-    Vec3 deltaP2;
-    Vec3 deltaV;
-    Vec3 dc_dp;
-    Mat3 df_dx,df_dv;
+
+    // force and derivative properties
+    double C;         // constraint 
+    double C_Dot;     // time derivative of constraint 
+    Vec3 deltaP; 
+    Vec3 deltaP2;     
+    Vec3 deltaV;      
+    Vec3 dc_dp;       // gradient of constraint wrt position
+    Mat3 df_dx;       // derivative of force wrt position
+    Mat3 df_dv;       // derivative of force wrt velocitie
     Mat3 J;
     Mat3 E;
     float inv_len;
@@ -36,15 +42,15 @@ public:
         node1 = n1;
         node2 = n2;
         Vec3 currSp = node2->position - node1->position;
-        restLength = currSp.length();   //rest length
+        restLength = currSp.length();   
         Ks = k;
         Kd = k*0.02;
         C = 0.0;
-        deltaP2.setZeroVec();
-        dc_dp.setZeroVec();
-        df_dx.setZeromat3();
-        df_dv.setZeromat3();
-        E.setIdentity();
+        deltaP2 = Vec3(0.0);
+        dc_dp = Vec3(0.0);
+        df_dx = Mat3(0.0);
+        df_dv = Mat3(0.0);
+        
        
 
 	}
@@ -66,18 +72,19 @@ public:
 
     void applyInternalForce(double timeStep) 
 	{
-        Vec3 deltaP = node2->position - node1->position; //originally p1-p1
         Vec3 v1 = node1->velocity;
         Vec3 v2 = node2->velocity;
+
+        deltaV = v2-v1;
+        deltaP = node2->position - node1->position; //originally p1-p1
         float currentSpringLength = deltaP.length(); // redundant i think 
-        double currLen = Vec3::dist(node1->position, node2->position);
-        deltaV = node2->velocity - node1->velocity;
         dc_dp = computeDcDp(deltaP,currentSpringLength);
         C = currentSpringLength-restLength;
        
         Vec3 f = dc_dp * ((C)*Ks + Vec3::dot(deltaV, dc_dp)*Kd);
         C_Dot = Vec3::dot(v1,dc_dp) + Vec3::dot(v2,dc_dp*(-1.0));  //  might need to flip the negative signs
         deltaP2 = Vec3(deltaP.x * deltaP.x, deltaP.y * deltaP.y, deltaP.z * deltaP.z);
+
         node1->addForce(f);
         node2->addForce(f.minus());
     }

@@ -4,7 +4,6 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
 #include <iostream>
 #include <cmath>
 
@@ -15,23 +14,15 @@
 #include "Headers/Program.h"
 #include "Headers/Display.h"
 
-#define WIDTH 900
-#define HEIGHT 900
 
+/** Constants **/
+#define WIDTH 600
+#define HEIGHT 600
 #define AIR_FRICTION 0.02
-#define TIME_STEP 0.02 // at 0.03, convergence increases to > 5
-
+#define TIME_STEP 0.03 // 0.03 increases convergence to 3 when performing CGM in smaller scope
 
 /** Executing Flow **/
 int running = 1;
-
-/** Functions **/
-void processInput(GLFWwindow *window);
-
-/** Callback functions **/
-void framebuffer_size_callback(GLFWwindow *window, int width, int height);
-void mouse_button_callback(GLFWwindow *window, int button, int action, int mods);
-void cursor_pos_callback(GLFWwindow *window, double xpos, double ypos);
 
 /** Global **/
 // Wind
@@ -49,15 +40,20 @@ Vec3 groundPos(-5, 1.5, 0);
 Vec2 groundSize(10, 10);
 glm::vec4 groundColor(0.8, 0.8, 0.8, 1.0);
 Ground ground(groundPos, groundSize, groundColor);
-// Ball
-// Vec3 ballPos(0, 3, -2); //(0, 3, -2);
-// int ballRadius = 1;
-// glm::vec4 ballColor(0.6f, 0.5f, 0.8f, 1.0f);
-// Ball ball(ballPos, ballRadius, ballColor);
-// Window and world
-GLFWwindow *window;
+
 Vec3 bgColor = Vec3(50.0/255, 50.0/255, 60.0/255);
 Vec3 gravity(0.0, -9.81, 0.0);
+
+
+/** Functions **/
+GLFWwindow *window;
+void processInput(GLFWwindow *window);
+void framebuffer_size_callback(GLFWwindow *window, int width, int height);
+void mouse_button_callback(GLFWwindow *window, int button, int action, int mods);
+void cursor_pos_callback(GLFWwindow *window, double xpos, double ypos);
+
+
+
 
 int main(int argc, const char * argv[])
 {
@@ -124,14 +120,8 @@ int main(int argc, const char * argv[])
         
         if (running) {
             for (int i = 0; i < cloth.iterationFreq; i ++) {
-                // in computeForce(), we also need to compute values for preconditioned CG
-                    // C[i] = dist-springs[i].rest_length;
-		            // dc_dp[i] = deltaP/dist;
-		            // C_Dot[i] = glm::dot(v1, -dc_dp[i]) + glm::dot(v2, dc_dp[i]);
-		            // deltaP2[i] = glm::vec3(deltaP.x*deltaP.x,deltaP.y*deltaP.y, deltaP.z*deltaP.z);
                 cloth.computeForce(TIME_STEP, gravity); 
                 cloth.computeForceDerivatives(TIME_STEP) ; // jacobian
-               
                 cloth.implicit_integration(TIME_STEP);
                 //cloth.implicit_integration_cgm(TIME_STEP);
                 cloth.collisionResponse(&ground);
@@ -145,7 +135,6 @@ int main(int argc, const char * argv[])
         } else {
             clothRender.flush();
         }
-        // ballRender.flush();
         groundRender.flush();
         
         /** -------------------------------- Simulation & Rendering -------------------------------- **/
@@ -153,9 +142,7 @@ int main(int argc, const char * argv[])
         glfwSwapBuffers(window);
         glfwPollEvents(); // Update the status of window
     }
-
     glfwTerminate();
-    
     return 0;
 }
 

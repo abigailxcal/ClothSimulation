@@ -113,7 +113,6 @@ public:
             
             //auto start = std::chrono::high_resolution_clock::now();
             solveConjugateGradient(A, deltaV, b, deltaTime);
-
             //auto end = std::chrono::high_resolution_clock::now();
             //auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
             //printf("CGM Convergence Time: %lld ms\n", duration.count());
