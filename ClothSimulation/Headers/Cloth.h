@@ -11,13 +11,15 @@
 #include "large_vector.h"
 #include <list>
 
- //Structural coeff: how well a cloth miantains its basic grid structure
+ // structural coeff: how well a cloth miantains its basic grid structure
  // high values = more rigid, low values = more stretch
  // rec: 200-500 N/m 
- //shearing coeff: how cloth miantains shape when stretched diagonally
+
+ // shearing coeff: how cloth miantains shape when stretched diagonally
  // low = unrealistic shearing
- // red: slightly lower than structural stiffness, 100-300 N/m
- // bending: resistance to out of plane bending
+ // rec: slightly lower than structural stiffness, 100-300 N/m
+
+ // bending coeff: resistance to out of plane bending
  // low = floppy, high = paper like 
  // 
  // damping coeff: controls the dissipation of energy to prevent endlesss oscillations
@@ -36,10 +38,10 @@ public:
     // const double shearCoef = 300;
     // const double bendingCoef = 20;
     // const double DEFAULT_DAMPING =  45.0;
-    const double structuralCoef = 0.950;
-    const double shearCoef = 0.15;
-    const double bendingCoef = 0.02;
-    const double DEFAULT_DAMPING =  0.7;    // maybe when time step exceeds 0.3, damping needs to be bigger than 0.5?
+   const double structuralCoef = 0.45;
+    const double shearCoef = 0.1;
+    const double bendingCoef = 0.75;
+    const double DEFAULT_DAMPING =  0.525;   // maybe when time step exceeds 0.3, damping needs to be bigger than 0.5?
     LargeVector<glm::vec3> dV;
     LargeVector<glm::mat3> A;
     glm::mat3 M = glm::mat3(1.0f);
@@ -161,9 +163,13 @@ public:
                 faces.push_back(getNode(i, j+1));
             }
         }
-        targets.push_back(5);
-        targets.push_back(22);
-        targets.push_back(193);
+        /** For Logging **/
+        //targets.push_back(5);
+        // targets.push_back(22);
+        // targets.push_back(82);
+        // targets.push_back(99);
+        // targets.push_back(193);
+        // targets.push_back(222);
         
 	}
     void createTargetNodes(){
@@ -209,23 +215,12 @@ public:
             
             nodes[i]->addForce(gravity * nodes[i]->mass);
             nodes[i]->addForce (nodes[i]->velocity*(DEFAULT_DAMPING)*(-1.0));
-            
-            
+              
 		}
 		/** Springs **/
 		for (int i = 0; i < springs.size(); i++){
 			springs[i]->applyInternalForce(timeStep);
 		} 
-        // for (int i = 0; i < nodes.size(); i++){
-        //     if (i==targetNode){
-        //         nodes[i]->istarget();
-        //     //nodes[i]->resetForces();
-        //     std::cout << "==================== Node" << i << " ====================\n";
-        //     std::cout << "Position: (" << nodes[i]->position.x << ", " << nodes[i]->position.y << ", " << nodes[i]->position.z << ")\n";
-        //     std::cout << "Internal Forces: (" << nodes[i]->force.x << ", " << nodes[i]->force.y << ", " << nodes[i]->force.z << ")\n";
-        //     std::cout << "Velocity: (" << nodes[i]->velocity.x << ", " << nodes[i]->velocity.y << ", " << nodes[i]->velocity.z << ")\n";
-        //     }
-        // }  
 	}
     // forces are calculated via springs, which get stored in the node
     // EDIT: to keep things consistent, cloth should call functions of nodes 
@@ -253,7 +248,6 @@ public:
     void setWorldPos(Node* n, Vec3 pos) { n->position = pos - clothPos; }
     
 	void collisionResponse(Ground* ground)
-    // void collisionResponse(Ground* ground, Ball* ball)
 	{
         for (int i = 0; i < nodes.size(); i++)
         {

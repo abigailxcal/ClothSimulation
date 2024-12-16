@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Vectors.h"
+#include <chrono>
 #include <vector>
 #include <fstream>
 #include <glm/glm.hpp>
@@ -33,10 +34,12 @@ public:
     Vec3 velocity;
     Vec3 force;
     Vec3 acceleration;
+
+    // For logging data :
     bool isTarget;
     int index;
 
-    // For implicit integration + CGM :
+    // For implicit integration + CGM + Preconditioned CGM (future implementation) :
     Mat3 df_dx;
     Mat3 df_dv;
     Vec3 deltaV;
@@ -120,40 +123,14 @@ public:
             float y = 0.0; //correciton term
             A =  M - ((df_dv + (df_dx * h))*h);
             b = ((force + (df_dx * ( velocity + y) * h)) * h); 
-            // if (isTarget){
-            //     std::cout << "-----------Implicit Integration----------- \n";
-            //     std::cout << "A Matrix: \n";
-            //     A.printMat3();
-            //     std::cout << "b Vector: (" << b.x << ", " << b.y << ", " << b.z << ")\n";
-            //     std::cout << "Δv Vector: (" << deltaV.x << ", " << deltaV.y << ", " << deltaV.z << ")\n";
-            //     std::cout << "  -----------Conjugate Gradient----------- \n";
-
-            // }
-            // if (isTarget){
-            //     std::cout << "========== Node " << index << "========\n";
-            // }
-            //auto start = std::chrono::high_resolution_clock::now();
             solveConjugateGradient3(A, deltaV, b, deltaTime);
-            //auto end = std::chrono::high_resolution_clock::now();
-            //auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-            //printf("CGM Convergence Time: %lld ms\n", duration.count());
             velocity += (deltaV*deltaTime);
             position += velocity*deltaTime;
-            // if (isTarget){
-            //     std::cout << "  -----------Update Velocity and Position----------- \n";
-            //     std::cout << "  New velocity: ";
-            //     velocity.printVec3();
-            //     std::cout << "  New position: ";
-            //     position.printVec3();
-                
-
-            // }
+    
         }
         resetForces();
     }
 
-    
-    
 
     void solveConjugateGradient3(Mat3 A, Vec3 &x, Vec3 b,double timeStep)
     {
@@ -180,26 +157,12 @@ public:
             delta_new = Vec3::dot(r, r);
             beta = delta_new / delta_old;
             d = r + (d * beta);
-            // if (isTarget){
-            //     iteration = i+1;
-            //     std::cout << "  Iteration " << iteration << ":\n";
-            //     std::cout << "    Residual Norm: " << delta_new << "\n";
-            //     std::cout << "    Direction Vector: (" << d.x << ", " << d.y << ", " << d.z << ")\n";
-
-            // }
             i++;
         }
-        if (isTarget) {
-            if (i>2){
-            std::cout << " converged after " << i << " iterations for node "<<index<<"\n";
-            }
+        if (i >2)
+        {
+            printf("Converged at iteration %f \n", i);
         }
-        //logIterations(timeStep, i);
-        //std::cout << "CGM converged after " << iteration << " iterations.\n";
-        // if (i >2)
-        // {
-        //     printf("Converged at iteration %f \n", i);
-        // }
     }
 
 
@@ -253,6 +216,24 @@ public:
     std::ofstream logFile("iterations.log", std::ios::app); // Open file in append mode
     if (logFile.is_open()) {
         logFile << timeStep << " " << iterations << "\n";   // Log time step and iterations
+        logFile.close();                                   // Close the file
+    } else {
+        std::cerr << "Error: Could not open iterations.log for writing." << std::endl;
+    }
+}
+//  void logConvergenceTime(double duration, int index) {
+//     std::ofstream logFile("ConvergenceTime.log", std::ios::app); // Open file in append mode
+//     if (logFile.is_open()) {
+//         logFile << "Node " << index << " Duration: "<< duration<<" microseconds\n";   // Log time step and iterations
+//         logFile.close();                                   // Close the file
+//     } else {
+//         std::cerr << "Error: Could not open iterations.log for writing." << std::endl;
+//     }
+// }
+void logConvergenceIteration(int index, int iterations,int duration) {
+    std::ofstream logFile("ConvergenceData.log", std::ios::app); // Open file in append mode
+    if (logFile.is_open()) {
+        logFile << "Node " << index << ", " << iterations << ", "<< duration<<" microseconds \n";   // Log time step and iterations
         logFile.close();                                   // Close the file
     } else {
         std::cerr << "Error: Could not open iterations.log for writing." << std::endl;

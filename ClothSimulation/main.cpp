@@ -16,13 +16,14 @@
 
 
 /** Constants **/
-#define WIDTH 600
-#define HEIGHT 600
+#define WIDTH 800
+#define HEIGHT 800
 #define AIR_FRICTION 0.02
-#define TIME_STEP 0.4 // 0.03 increases convergence to 3 when performing CGM in smaller scope
+#define TIME_STEP 0.3 // 0.03 increases convergence to 3 when performing CGM in smaller scope
 
 /** Executing Flow **/
 int running = 1;
+double currentTime = 0.0;
 
 /** Global **/
 // Wind
@@ -32,11 +33,11 @@ Vec3 windStartPos;
 Vec3 windDir;
 Vec3 wind;
 // Cloth
-Vec3 clothPos(-2, 7.5, -2);
+Vec3 clothPos(-3, 7.5, -2);
 Vec2 clothSize(5, 5); //(6, 6)
 Cloth cloth(clothPos, clothSize);
 // Ground
-Vec3 groundPos(-5, 1.5, 0);
+Vec3 groundPos(-5, 1.5, 0); //(left/right,up/down )
 Vec2 groundSize(10, 10);
 glm::vec4 groundColor(0.8, 0.8, 0.8, 1.0);
 Ground ground(groundPos, groundSize, groundColor);
@@ -100,8 +101,8 @@ int main(int argc, const char * argv[])
     GroundRender groundRender(&ground);
     // BallRender ballRender(&ball);
     
-    // Vec3 initForce(5.0, 10.0, 5.0);
-    // cloth.addForce(initForce);
+
+
     
     glEnable(GL_DEPTH_TEST);
     glPointSize(3);
@@ -120,6 +121,7 @@ int main(int argc, const char * argv[])
         /** -------------------------------- Simulation & Rendering -------------------------------- **/
         
         if (running) {
+            currentTime += TIME_STEP;
             // for (int i = 0; i < cloth.iterationFreq; i ++) {
             //     cloth.computeForce(TIME_STEP, gravity); 
             //     cloth.computeForceDerivatives(TIME_STEP) ; // jacobian
