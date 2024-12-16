@@ -38,10 +38,10 @@ public:
     // const double shearCoef = 300;
     // const double bendingCoef = 20;
     // const double DEFAULT_DAMPING =  45.0;
-   const double structuralCoef = 0.45;
-    const double shearCoef = 0.1;
+   const double structuralCoef = 0.65;
+    const double shearCoef = 0.2;
     const double bendingCoef = 0.75;
-    const double DEFAULT_DAMPING =  0.525;   // maybe when time step exceeds 0.3, damping needs to be bigger than 0.5?
+    const double DEFAULT_DAMPING =  0.60;   // maybe when time step exceeds 0.3, damping needs to be bigger than 0.5?
     LargeVector<glm::vec3> dV;
     LargeVector<glm::mat3> A;
     glm::mat3 M = glm::mat3(1.0f);

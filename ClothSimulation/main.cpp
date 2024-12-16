@@ -37,7 +37,7 @@ Vec3 clothPos(-3, 7.5, -2);
 Vec2 clothSize(5, 5); //(6, 6)
 Cloth cloth(clothPos, clothSize);
 // Ground
-Vec3 groundPos(-5, 1.5, 0); //(left/right,up/down )
+Vec3 groundPos(-5, 1, 0); //(left/right,up/down )
 Vec2 groundSize(10, 10);
 glm::vec4 groundColor(0.8, 0.8, 0.8, 1.0);
 Ground ground(groundPos, groundSize, groundColor);
