@@ -15,8 +15,8 @@
 #include "Headers/Program.h"
 #include "Headers/Display.h"
 
-#define WIDTH 800
-#define HEIGHT 800
+#define WIDTH 600
+#define HEIGHT 600
 
 #define AIR_FRICTION 0.02
 #define TIME_STEP 0.01
@@ -35,12 +35,12 @@ void cursor_pos_callback(GLFWwindow *window, double xpos, double ypos);
 /** Global **/
 // Wind
 int windBlowing = 0;
-int windForceScale = 15;
+int windForceScale = 15; //15
 Vec3 windStartPos;
 Vec3 windDir;
 Vec3 wind;
 // Cloth
-Vec3 clothPos(-3, 7.5, -2);
+Vec3 clothPos(-2, 7.5, -2);
 Vec2 clothSize(4, 4); //(6, 6)
 Cloth cloth(clothPos, clothSize);
 // Ground
@@ -49,14 +49,14 @@ Vec2 groundSize(10, 10);
 glm::vec4 groundColor(0.8, 0.8, 0.8, 1.0);
 Ground ground(groundPos, groundSize, groundColor);
 // Ball
-Vec3 ballPos(0, 3, -2);
+Vec3 ballPos(0, 3, -2); //(0, 3, -2);
 int ballRadius = 1;
 glm::vec4 ballColor(0.6f, 0.5f, 0.8f, 1.0f);
 Ball ball(ballPos, ballRadius, ballColor);
 // Window and world
 GLFWwindow *window;
 Vec3 bgColor = Vec3(50.0/255, 50.0/255, 60.0/255);
-Vec3 gravity(0.0, -9.8 / cloth.iterationFreq, 0.0);
+Vec3 gravity(0.0, -9.8, 0.0);
 
 int main(int argc, const char * argv[])
 {
@@ -130,8 +130,9 @@ int main(int argc, const char * argv[])
 		            // deltaP2[i] = glm::vec3(deltaP.x*deltaP.x,deltaP.y*deltaP.y, deltaP.z*deltaP.z);
                 cloth.computeForce(TIME_STEP, gravity); 
                 cloth.computeForceDerivatives(TIME_STEP) ; // jacobian
-                cloth.integrate(AIR_FRICTION, TIME_STEP);
-                cloth.collisionResponse(&ground, &ball);
+               // cloth.integrate(AIR_FRICTION, TIME_STEP);
+                cloth.implicit_integration(TIME_STEP);
+                //cloth.collisionResponse(&ground, &ball);
             }
             cloth.computeNormal();
         }

@@ -8,8 +8,9 @@
           "-o", "my_project",
           "main.cpp", "glad.c",
           "-I", "includes","-I/opt/homebrew/include", 
+          "-I/opt/homebrew/Cellar/eigen/3.4.0_1/include/eigen3/Eigen",
           "-L", "/opt/homebrew/lib",
-          "-lglfw", "-ldl", "-lGL"
+          "-lglfw", "-ldl","-lGL"
         ],
         "group": {
           "kind": "build",

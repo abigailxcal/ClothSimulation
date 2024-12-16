@@ -1,5 +1,6 @@
 #pragma once
-
+#include <Eigen/Sparse>
+#include <Eigen/IterativeLinearSolvers>
 #include <vector>
 #include <vector>
 #include <glm/glm.hpp>
@@ -11,11 +12,34 @@
 class Cloth
 {
 public:
-    const int nodesDensity = 3; //4
-    const int iterationFreq = 25;
-    const double structuralCoef = 1000.0;
-    const double shearCoef = 50.0;
-    const double bendingCoef = 400.0;
+
+
+    //Structural coeff: how well a cloth miantains its basic grid structure
+    // high values = more rigid, low values = more stretch
+    // rec: 200-500 N/m 
+
+    //shearing coeff: how cloth miantains shape when stretched diagonally
+    // low = unrealistic shearing
+    // red: slightly lower than structural stiffness, 100-300 N/m
+
+
+    // bending: resistance to out of plane bending
+    // low = floppy, high = paper like 
+    // 
+
+    // damping coeff: controls the dissipation of energy to prevent endlesss oscillations
+    // low damping = allow oscilllations to persist 
+
+    const int nodesDensity = 4; //4
+    const int iterationFreq = 2; //25
+    // const double structuralCoef = 1000;
+    // const double shearCoef = 200;
+    // const double bendingCoef = 400;
+    const double structuralCoef = 1000;
+    const double shearCoef = 300;
+    const double bendingCoef = 20;
+    const double DEFAULT_DAMPING =  45.0;
+
     
     enum DrawModeEnum{
         DRAW_NODES,
@@ -93,7 +117,7 @@ public:
                 /** Add node to cloth **/
                 nodes.push_back(node);
                 
-                printf("\t[%d, %d] (%f, %f, %f) - (%f, %f)\n", i, j, node->position.x, node->position.y, node->position.z, node->texCoord.x, node->texCoord.y);
+                // printf("\t[%d, %d] (%f, %f, %f) - (%f, %f)\n", i, j, node->position.x, node->position.y, node->position.z, node->texCoord.x, node->texCoord.y);
             }
             std::cout << std::endl;
         }
@@ -173,44 +197,50 @@ public:
 		for (int i = 0; i < nodes.size(); i++)
 		{
 			nodes[i]->addForce(gravity * nodes[i]->mass);
-            // might want to add damp velocity:
-            // nodes[i]->addForce(DEFAULT_DAMPING * nodes[i]->velocity);
+            //printf("Force before damping:\n");
+            //nodes[i]->printForce();
+            nodes[i]->addForce (nodes[i]->velocity*(DEFAULT_DAMPING)*(-1.0));
+            //printf("Force after damping:\n");
+            //nodes[i]->printForce();
 
+        
 		}
 		/** Springs **/
 		for (int i = 0; i < springs.size(); i++)
 		{
 			springs[i]->applyInternalForce(timeStep);
 		}
+        // for (int i = 0; i < nodes.size(); i++)
+		// {
+        //     nodes[i]->addForce (nodes[i]->velocity*(DEFAULT_DAMPING)*(-1.0));
+
+        
+		// }
+        
 	}
 
     void computeForceDerivatives(double timeStep)
     {
-	// should the derivatives need to be cleared?
-	// memset(&(df_dx[0]),0,total_points*sizeof(glm::mat3));
-	// memset(&(df_dv[0]),0,total_points*sizeof(glm::mat3));
      for (int i = 0; i < springs.size(); i++)
 		{
             springs[i]->springForceDerivative(); //accesses df_dx,df_dv in Spring.h
-			
 		}   
     }
     void implicit_integration(double timeStep){
         for (int i = 0; i < nodes.size(); i++){
             nodes[i]->implicit_integration(timeStep);
         }
-
+        
     }
 
-
-	void integrate(double airFriction, double timeStep)
-	{
-        /** Node **/
-        for (int i = 0; i < nodes.size(); i++)
-        {
-            nodes[i]->integrate(timeStep);
-        }
-	}
+	// void integrate(double airFriction, double timeStep)
+	// {
+    //     /** Node **/
+    //     for (int i = 0; i < nodes.size(); i++)
+    //     {
+    //         nodes[i]->integrate(timeStep);
+    //     }
+	// }
 	
     Vec3 getWorldPos(Node* n) { return clothPos + n->position; }
     void setWorldPos(Node* n, Vec3 pos) { n->position = pos - clothPos; }

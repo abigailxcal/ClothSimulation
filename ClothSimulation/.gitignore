@@ -1,2 +1,4 @@
 /includes
-log.txt
+/References
+.venv
+.vscode
