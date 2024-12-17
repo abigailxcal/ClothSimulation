@@ -100,6 +100,8 @@ int main(int argc, const char * argv[])
     ClothSpringRender clothSpringRender(&cloth);
     GroundRender groundRender(&ground);
     // BallRender ballRender(&ball);
+    Vec3 initForce(0.1,0.3,0.1);
+    cloth.addForce(initForce);
     
     
 
